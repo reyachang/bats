@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bat Echolocation Simulation</title>
+    <style>
+        body { background-color: black; color: white; overflow: hidden; position: relative; }
+        .bat { position: absolute; font-size: 2rem; left: 50px; top: 50px; cursor: pointer; }
+        .wave { position: absolute; border: 2px solid blue; border-radius: 50%; }
+        .prey { position: absolute; color: green; font-size: 1.5rem; left: 300px; top: 200px; }
+        .obstacle { position: absolute; background-color: gray; width: 50px; height: 50px; left: 200px; top: 200px; }
+        .controls { position: fixed; bottom: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
+        .controls button { padding: 10px; background: gray; color: white; border: none; cursor: pointer; }
+        .tooltip { position: absolute; background: white; color: black; padding: 5px; border-radius: 5px; display: none; }
+    </style>
+</head>
+<body>
+    <audio id="echolocationSound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
+    <div id="bat" class="bat" onmouseover="showTooltip(event)" onmouseout="hideTooltip()">🦇</div>
+    <div id="tooltip" class="tooltip">I am a bat! I use echolocation to navigate and find food.</div>
+    <div id="prey" class="prey">🐜</div>
+    <div id="obstacle" class="obstacle"></div>
+    
+    <div class="controls">
+        <div>
+            <button onclick="moveBat(0, -10)">↑</button>
+        </div>
+        <div>
+            <button onclick="moveBat(-10, 0)">←</button>
+            <button onclick="moveBat(10, 0)">→</button>
+        </div>
+        <div>
+            <button onclick="moveBat(0, 10)">↓</button>
+        </div>
+        <button onclick="emitSoundWave()">🔊 Echolocate</button>
+    </div>
+
+    <script>
+        let bat = document.getElementById('bat');
+        let tooltip = document.getElementById('tooltip');
+        let echolocationSound = document.getElementById('echolocationSound');
+        let obstacle = document.getElementById('obstacle');
+
+        function moveBat(dx, dy) {
+            let currentLeft = parseInt(bat.style.left || 50);
+            let currentTop = parseInt(bat.style.top || 50);
+            let newLeft = currentLeft + dx;
+            let newTop = currentTop + dy;
+            
+            if (!checkCollision(newLeft, newTop)) {
+                bat.style.left = newLeft + 'px';
+                bat.style.top = newTop + 'px';
+            }
+        }
+
+        function checkCollision(newLeft, newTop) {
+            let batRect = { left: newLeft, top: newTop, right: newLeft + 40, bottom: newTop + 40 };
+            let obstacleRect = obstacle.getBoundingClientRect();
+            
+            return !(
+                batRect.right < obstacleRect.left ||
+                batRect.left > obstacleRect.right ||
+                batRect.bottom < obstacleRect.top ||
+                batRect.top > obstacleRect.bottom
+            );
+        }
+
+        function emitSoundWave() {
+            echolocationSound.play();
+            let wave = document.createElement('div');
+            wave.className = 'wave';
+            let rect = bat.getBoundingClientRect();
+            wave.style.left = rect.left + 'px';
+            wave.style.top = rect.top + 'px';
+            wave.style.width = '10px';
+            wave.style.height = '10px';
+            document.body.appendChild(wave);
+
+            let grow = setInterval(() => {
+                let size = parseInt(wave.style.width);
+                if (size > 200) {
+                    clearInterval(grow);
+                    wave.remove();
+                } else {
+                    wave.style.width = size + 10 + 'px';
+                    wave.style.height = size + 10 + 'px';
+                    wave.style.left = rect.left - size / 2 + 'px';
+                    wave.style.top = rect.top - size / 2 + 'px';
+                }
+            }, 100);
+        }
+
+        function showTooltip(event) {
+            tooltip.style.display = 'block';
+            tooltip.style.left = event.pageX + 10 + 'px';
+            tooltip.style.top = event.pageY + 10 + 'px';
+        }
+
+        function hideTooltip() {
+            tooltip.style.display = 'none';
+        }
+
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case 'ArrowUp':
+                    moveBat(0, -10);
+                    break;
+                case 'ArrowDown':
+                    moveBat(0, 10);
+                    break;
+                case 'ArrowLeft':
+                    moveBat(-10, 0);
+                    break;
+                case 'ArrowRight':
+                    moveBat(10, 0);
+                    break;
+                case ' ':
+                    emitSoundWave();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -13,27 +13,58 @@
         .controls { position: fixed; bottom: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
         .controls button { padding: 10px; background: gray; color: white; border: none; cursor: pointer; }
         .tooltip { position: absolute; background: white; color: black; padding: 5px; border-radius: 5px; display: none; }
+        
+        /* New styles for screens */
+        .screen { display: none; width: 100vw; height: 100vh; position: relative; }
+        .screen.active { display: block; }
+        .navigation { 
+            position: fixed; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 0 50px; 
+            max-width: 1200px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100; 
+        }
+        .nav-arrow { font-size: 3rem; color: white; cursor: pointer; background: none; border: none; opacity: 0.5; transition: opacity 0.3s; }
+        .nav-arrow:hover { opacity: 1; }
+        .screen-indicator { position: fixed; top: 10px; right: 10px; color: white; }
     </style>
 </head>
 <body>
-    <audio id="echolocationSound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
-    <div id="bat" class="bat" onmouseover="showTooltip(event)" onmouseout="hideTooltip()">🦇</div>
-    <div id="tooltip" class="tooltip">I am a bat! I use echolocation to navigate and find food.</div>
-    <div id="prey" class="prey">🐜</div>
-    <div id="obstacle" class="obstacle"></div>
-    
-    <div class="controls">
-        <div>
-            <button onclick="moveBat(0, -10)">↑</button>
+    <div class="navigation">
+        <button class="nav-arrow prev-screen">←</button>
+        <button class="nav-arrow next-screen">→</button>
+    </div>
+    <div class="screen-indicator">Screen: <span id="screenNumber">1</span>/2</div>
+
+    <div id="screen1" class="screen active">
+        <audio id="echolocationSound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
+        <div id="bat" class="bat" onmouseover="showTooltip(event)" onmouseout="hideTooltip()">🦇</div>
+        <div id="tooltip" class="tooltip">I am a bat! I use echolocation to navigate and find food.</div>
+        <div id="prey" class="prey">🐜</div>
+        <div id="obstacle" class="obstacle"></div>
+        
+        <div class="controls">
+            <button onclick="emitSoundWave()">🔊 Echolocate</button>
         </div>
-        <div>
-            <button onclick="moveBat(-10, 0)">←</button>
-            <button onclick="moveBat(10, 0)">→</button>
+    </div>
+
+    <div id="screen2" class="screen">
+        <h1 style="text-align: center; padding-top: 50px;">Advanced Echolocation Challenge</h1>
+        <div id="bat2" class="bat">🦇</div>
+        <div class="obstacle" style="left: 150px; top: 150px;"></div>
+        <div class="obstacle" style="left: 350px; top: 250px;"></div>
+        <div class="obstacle" style="left: 550px; top: 150px;"></div>
+        <div class="prey" style="left: 600px; top: 300px;">🐜</div>
+        
+        <div class="controls">
+            <button onclick="emitSoundWave()">🔊 Echolocate</button>
         </div>
-        <div>
-            <button onclick="moveBat(0, 10)">↓</button>
-        </div>
-        <button onclick="emitSoundWave()">🔊 Echolocate</button>
     </div>
 
     <script>
@@ -41,6 +72,8 @@
         let tooltip = document.getElementById('tooltip');
         let echolocationSound = document.getElementById('echolocationSound');
         let obstacle = document.getElementById('obstacle');
+        let currentScreen = 1;
+        const totalScreens = 2;
 
         function moveBat(dx, dy) {
             let currentLeft = parseInt(bat.style.left || 50);
@@ -120,6 +153,28 @@
                     break;
             }
         });
+
+        // Add screen navigation functions
+        function navigateScreen(direction) {
+            const currentScreenElement = document.getElementById(`screen${currentScreen}`);
+            currentScreenElement.classList.remove('active');
+            
+            currentScreen = direction === 'next' 
+                ? (currentScreen % totalScreens) + 1 
+                : (currentScreen - 2 + totalScreens) % totalScreens + 1;
+            
+            const nextScreenElement = document.getElementById(`screen${currentScreen}`);
+            nextScreenElement.classList.add('active');
+            document.getElementById('screenNumber').textContent = currentScreen;
+            
+            // Reset bat position when changing screens
+            bat.style.left = '50px';
+            bat.style.top = '50px';
+        }
+
+        // Add event listeners for navigation
+        document.querySelector('.next-screen').addEventListener('click', () => navigateScreen('next'));
+        document.querySelector('.prev-screen').addEventListener('click', () => navigateScreen('prev'));
     </script>
 </body>
 </html>

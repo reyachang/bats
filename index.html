@@ -5,9 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bat Echolocation Simulation</title>
     <style>
-        body { background-color: black; color: white; overflow: hidden; position: relative; }
+        body { 
+            background-color: black; 
+            color: white; 
+            overflow-x: hidden;  /* Change from overflow: hidden to overflow-x */
+            position: relative;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            height: 100vh;
+        }
         .bat { position: absolute; font-size: 2rem; left: 50px; top: 50px; cursor: pointer; }
-        .wave { position: absolute; border: 2px solid blue; border-radius: 50%; }
+        .wave { 
+            position: fixed; /* Change from absolute to fixed */
+            border: 2px solid blue; 
+            border-radius: 50%;
+            z-index: 1000; /* Ensure wave appears above other elements */
+        }
         .prey { position: absolute; color: green; font-size: 1.5rem; left: 300px; top: 200px; }
         .obstacle { position: absolute; background-color: gray; width: 50px; height: 50px; left: 200px; top: 200px; }
         .controls { position: fixed; bottom: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
@@ -15,24 +31,20 @@
         .tooltip { position: absolute; background: white; color: black; padding: 5px; border-radius: 5px; display: none; }
         
         /* New styles for screens */
-        .screen { display: none; width: 100vw; height: 100vh; position: relative; }
-        .screen.active { display: block; }
-        .navigation { 
-            position: fixed; 
-            top: 50%; 
-            transform: translateY(-50%); 
+        .screen { 
+            display: block; /* Change from none to block */
             width: 100%; 
-            display: flex; 
-            justify-content: flex-end;
-            padding: 0 50px; 
-            max-width: 1200px;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100; 
+            height: 100vh;
+            position: relative;
+            padding: 20px;
+            box-sizing: border-box;
+            scroll-snap-align: start;
+            overflow-y: auto;
         }
-        .nav-arrow { font-size: 3rem; color: white; cursor: pointer; background: none; border: none; opacity: 0.5; transition: opacity 0.3s; }
-        .nav-arrow:hover { opacity: 1; }
-        .nav-arrow.hidden { display: none; }
+        .screen.active { display: block; }
+        .navigation {
+            display: none;
+        }
         .screen-indicator { position: fixed; top: 10px; right: 10px; color: white; }
         
         /* New styles for text entry screen */
@@ -89,6 +101,71 @@
             display: block;
             margin: 10px 0;
             cursor: pointer;
+        }
+
+        /* Responsive text containers */
+        .question-container,
+        .sound-comparison,
+        div[style*="max-width: 800px"] {
+            max-width: min(800px, 90vw) !important;
+            padding: 20px !important;
+            margin: 20px auto !important;
+            box-sizing: border-box;
+        }
+
+        /* Responsive text */
+        p, li, label, button {
+            font-size: clamp(1rem, 2vw, 1.2rem) !important;
+            line-height: 1.6 !important;
+        }
+
+        /* Responsive controls */
+        .controls {
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: auto !important;
+            z-index: 10;
+        }
+
+        /* Responsive navigation */
+        .navigation {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 90%;
+            max-width: 1200px;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        /* Responsive buttons */
+        button {
+            padding: clamp(10px, 2vw, 15px) clamp(20px, 4vw, 30px) !important;
+        }
+
+        /* Media queries for smaller screens */
+        @media (max-width: 768px) {
+            .screen-indicator {
+                top: 5px;
+                right: 5px;
+                font-size: 0.9rem;
+            }
+
+            .bat {
+                font-size: 1.5rem;
+            }
+
+            .prey {
+                font-size: 1.2rem;
+            }
+
+            .obstacle {
+                width: 30px;
+                height: 30px;
+            }
         }
     </style>
 </head>
@@ -162,15 +239,15 @@
         <h1 style="text-align: center; padding-top: 50px; font-size: 2.5rem;">
             How might bats find food in a dark cave with obstacles?
         </h1>
+        <div style="text-align: center; font-size: 1.2rem; margin-top: 20px;">
+            <p>Use WASD keys to move the bat</p>
+            <p>Press E to echolocate</p>
+        </div>
         <audio id="echolocationSound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
         <div id="bat" class="bat" onmouseover="showTooltip(event)" onmouseout="hideTooltip()">🦇</div>
         <div id="tooltip" class="tooltip">I am a bat! I use echolocation to navigate and find food.</div>
         <div id="prey" class="prey">🐜</div>
         <div id="obstacle" class="obstacle"></div>
-        
-        <div class="controls" style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: auto;">
-            <button onclick="emitSoundWave()" style="font-size: 1.2rem; padding: 15px 30px;">🔊 Echolocate</button>
-        </div>
     </div>
 
     <div id="screen6" class="screen">
@@ -249,10 +326,12 @@
             let wave = document.createElement('div');
             wave.className = 'wave';
             let rect = bat.getBoundingClientRect();
-            wave.style.left = rect.left + 'px';
-            wave.style.top = rect.top + 'px';
+            
+            wave.style.left = (rect.left + rect.width/2) + 'px';
+            wave.style.top = (rect.top + rect.height/2) + 'px';
             wave.style.width = '10px';
             wave.style.height = '10px';
+            wave.style.transform = 'translate(-50%, -50%)';
             document.body.appendChild(wave);
 
             let grow = setInterval(() => {
@@ -261,10 +340,11 @@
                     clearInterval(grow);
                     wave.remove();
                 } else {
-                    wave.style.width = size + 10 + 'px';
-                    wave.style.height = size + 10 + 'px';
-                    wave.style.left = rect.left - size / 2 + 'px';
-                    wave.style.top = rect.top - size / 2 + 'px';
+                    size += 10;
+                    wave.style.width = size + 'px';
+                    wave.style.height = size + 'px';
+                    wave.style.left = (rect.left + rect.width/2) + 'px';
+                    wave.style.top = (rect.top + rect.height/2) + 'px';
                 }
             }, 100);
         }
@@ -295,65 +375,53 @@
         }
 
         document.addEventListener('keydown', function(event) {
-            switch(event.key) {
-                case 'ArrowUp':
+            switch(event.key.toLowerCase()) {
+                case 'w':
                     moveBat(0, -10);
                     break;
-                case 'ArrowDown':
+                case 's':
                     moveBat(0, 10);
                     break;
-                case 'ArrowLeft':
+                case 'a':
                     moveBat(-10, 0);
                     break;
-                case 'ArrowRight':
+                case 'd':
                     moveBat(10, 0);
                     break;
-                case ' ':
+                case 'e':
                     emitSoundWave();
                     break;
             }
         });
 
-        // Add screen navigation functions
-        function navigateScreen(direction) {
-            const currentScreenElement = document.getElementById(`screen${currentScreen}`);
-            currentScreenElement.classList.remove('active');
-            
-            currentScreen = direction === 'next' 
-                ? (currentScreen % totalScreens) + 1 
-                : (currentScreen - 2 + totalScreens) % totalScreens + 1;
-            
-            const nextScreenElement = document.getElementById(`screen${currentScreen}`);
-            nextScreenElement.classList.add('active');
-            document.getElementById('screenNumber').textContent = currentScreen;
-            
-            // Reset bat position when changing screens
-            bat.style.left = '50px';
-            bat.style.top = '50px';
-            
-            // Update arrow visibility
-            document.querySelector('.prev-screen').classList.toggle('hidden', currentScreen === 1);
-            document.querySelector('.next-screen').classList.toggle('hidden', currentScreen === totalScreens);
-        }
+        // Replace navigation functions with scroll-based navigation
+        let lastScrollTime = 0;
+        const scrollCooldown = 500; // ms between scroll events
 
-        // Add initial arrow visibility check
-        document.querySelector('.prev-screen').classList.add('hidden');
+        window.addEventListener('scroll', function() {
+            const now = Date.now();
+            if (now - lastScrollTime > scrollCooldown) {
+                const scrollPosition = window.scrollY;
+                const windowHeight = window.innerHeight;
+                const currentScreenIndex = Math.round(scrollPosition / windowHeight) + 1;
+                
+                if (currentScreenIndex !== currentScreen) {
+                    currentScreen = currentScreenIndex;
+                    document.getElementById('screenNumber').textContent = currentScreen;
+                }
+                
+                lastScrollTime = now;
+            }
+        });
 
-        // Add event listeners for navigation
-        document.querySelector('.next-screen').addEventListener('click', () => navigateScreen('next'));
-        document.querySelector('.prev-screen').addEventListener('click', () => navigateScreen('prev'));
-
+        // Update goToStart function to use scrolling
         function goToStart() {
-            const currentScreenElement = document.getElementById(`screen${currentScreen}`);
-            currentScreenElement.classList.remove('active');
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
             currentScreen = 1;
-            const firstScreen = document.getElementById('screen1');
-            firstScreen.classList.add('active');
             document.getElementById('screenNumber').textContent = 1;
-            
-            // Update arrow visibility
-            document.querySelector('.prev-screen').classList.add('hidden');
-            document.querySelector('.next-screen').classList.remove('hidden');
         }
     </script>
 </body>
